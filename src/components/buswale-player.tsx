@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { playlists } from "@/data/playlists";
 
 type YTPlayer = {
@@ -103,6 +103,15 @@ function loadYouTubeApi() {
   return youtubeApiPromise;
 }
 
+const STORAGE_KEY = "siteplaylist:selected-id";
+
+function readStoredPlaylistId(): string | null {
+  if (typeof window === "undefined") return null;
+  const saved = window.localStorage.getItem(STORAGE_KEY);
+  if (saved && playlists.some((item) => item.id === saved)) return saved;
+  return null;
+}
+
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
   const mins = Math.floor(seconds / 60);
@@ -111,6 +120,7 @@ function formatTime(seconds: number) {
 }
 
 export function BuswalePlayer() {
+  const [hasChosen, setHasChosen] = useState<boolean | null>(null);
   const [playlistId, setPlaylistId] = useState(playlists[0]?.id ?? "buswale");
   const playlist =
     playlists.find((item) => item.id === playlistId) ?? playlists[0];
@@ -134,10 +144,30 @@ export function BuswalePlayer() {
   const bgVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const lastTrackIdRef = useRef<string | null>(null);
 
+  useLayoutEffect(() => {
+    const saved = readStoredPlaylistId();
+    if (saved) {
+      setPlaylistId(saved);
+      setHasChosen(true);
+    } else {
+      setHasChosen(false);
+    }
+  }, []);
+
   useEffect(() => {
+    if (!hasChosen) {
+      setEntered(false);
+      return;
+    }
     const enterTimer = window.setTimeout(() => setEntered(true), 40);
     return () => window.clearTimeout(enterTimer);
-  }, []);
+  }, [hasChosen]);
+
+  function selectPlaylist(id: string) {
+    setPlaylistId(id);
+    window.localStorage.setItem(STORAGE_KEY, id);
+    setHasChosen(true);
+  }
 
   useEffect(() => {
     setNow(new Date());
@@ -146,7 +176,7 @@ export function BuswalePlayer() {
   }, []);
 
   useEffect(() => {
-    if (!playlist) return;
+    if (!hasChosen || !playlist) return;
 
     setBgIndex(0);
     setPlaying(false);
@@ -164,11 +194,11 @@ export function BuswalePlayer() {
     );
     lastTrackIdRef.current = null;
     bgVideoRefs.current = [];
-  }, [playlist]);
+  }, [hasChosen, playlist]);
 
   // One looping bg video per track — switch only when the song changes.
   useEffect(() => {
-    if (!videoId || !playlist) return;
+    if (!hasChosen || !videoId || !playlist) return;
 
     if (lastTrackIdRef.current == null) {
       lastTrackIdRef.current = videoId;
@@ -183,10 +213,10 @@ export function BuswalePlayer() {
         1;
       setBgIndex((current) => (current + 1) % bgCount);
     }
-  }, [videoId, playlist]);
+  }, [hasChosen, videoId, playlist]);
 
   useEffect(() => {
-    if (!playlist) return;
+    if (!hasChosen || !playlist) return;
     const videos = bgVideoRefs.current;
 
     videos.forEach((video, index) => {
@@ -205,12 +235,12 @@ export function BuswalePlayer() {
         video.currentTime = 0;
       }
     });
-  }, [bgIndex, playlist]);
+  }, [hasChosen, bgIndex, playlist]);
 
   useEffect(() => {
     let destroyed = false;
 
-    if (!playlist?.youtubePlaylistId) {
+    if (!hasChosen || !playlist?.youtubePlaylistId) {
       playerRef.current?.destroy();
       playerRef.current = null;
       playerMountRef.current?.replaceChildren();
@@ -318,7 +348,7 @@ export function BuswalePlayer() {
       playerRef.current = null;
       playerMountRef.current?.replaceChildren();
     };
-  }, [playlist]);
+  }, [hasChosen, playlist]);
 
   useEffect(() => {
     if (!playerReady || !playing || seeking) return;
@@ -340,6 +370,110 @@ export function BuswalePlayer() {
 
   if (!playlist) {
     return null;
+  }
+
+  if (hasChosen === null) {
+    return <main className="min-h-dvh bg-[var(--background)]" />;
+  }
+
+  if (!hasChosen) {
+    return (
+      <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 pb-16 pt-10 text-[var(--ink)]">
+        <div
+          className="absolute inset-0 scale-105 bg-[url('/images/other/image.png')] bg-cover bg-center blur-[4px]"
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,18,14,0.45)_0%,rgba(12,18,14,0.58)_55%,rgba(12,18,14,0.78)_100%)]" />
+
+        <div className="relative z-10 w-full max-w-4xl animate-rise">
+          <p className="-mt-6 text-center text-xs tracking-[0.22em] text-white/65 uppercase sm:-mt-10">
+            Vinyl Crate
+          </p>
+          <h1
+            className="font-playlist-title mt-5 text-center text-[clamp(2rem,8vw,3.4rem)] leading-[1.15] text-white sm:mt-6"
+            style={{ fontFamily: "Gotu, sans-serif" }}
+          >
+            कौन सी प्लेलिस्ट?
+          </h1>
+          <p className="mx-auto mt-3 max-w-md text-center text-sm text-white/70">
+            Record चुनो — drop the needle. Switch anytime from the top right.
+          </p>
+
+          <div className="mt-10 flex snap-x snap-mandatory items-start gap-5 overflow-x-auto px-2 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center sm:gap-8 sm:overflow-visible [&::-webkit-scrollbar]:hidden">
+            {playlists.map((item) => {
+              const cover =
+                item.posterImage ??
+                item.backgroundImages?.[0] ??
+                "/images/other/image.png";
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => selectPlaylist(item.id)}
+                  className="group flex w-[min(42vw,170px)] shrink-0 snap-center flex-col items-center gap-4 sm:w-[170px]"
+                >
+                  <span className="playlist-vinyl block overflow-hidden bg-[#14110f]">
+                    <span className="playlist-vinyl-grooves absolute inset-0" />
+                    <span className="playlist-vinyl-art absolute inset-[18%] overflow-hidden rounded-full">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={cover}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </span>
+                    <span className="absolute left-1/2 top-1/2 z-[1] h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black ring-2 ring-white/20" />
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition group-hover:opacity-100">
+                      <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-xl">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          aria-hidden
+                        >
+                          <path d="M4 2.6v10.8L13.4 8 4 2.6Z" />
+                        </svg>
+                      </span>
+                    </span>
+                  </span>
+
+                  <span className="flex w-full flex-col items-center text-center">
+                    <span
+                      className="font-playlist-title block min-h-[2.5em] w-full text-lg leading-tight text-white sm:text-xl"
+                      style={{ fontFamily: "Gotu, sans-serif" }}
+                    >
+                      {item.titleLines.map((line, index) => (
+                        <span key={line}>
+                          {index > 0 ? <br /> : null}
+                          {line}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="mt-1 line-clamp-2 h-[2.6em] w-full overflow-hidden text-xs leading-snug text-white/65">
+                      {item.tagline}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 text-center text-xs text-white/55 sm:text-sm">
+          Developed और designed by{" "}
+          <a
+            href="https://anshajaymishra.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-white/85 underline decoration-white/30 underline-offset-2 transition hover:text-white hover:decoration-white/70"
+          >
+            अंश अजय मिश्रा
+          </a>
+        </p>
+      </main>
+    );
   }
 
   function togglePlay() {
@@ -385,7 +519,7 @@ export function BuswalePlayer() {
   const artwork =
     videoId != null
       ? `https://i.ytimg.com/vi/${videoId}/hq720.jpg`
-      : playlist.posterImage;
+      : null;
 
   const timeLabel = now
     ? now.toLocaleTimeString([], {
@@ -416,7 +550,6 @@ export function BuswalePlayer() {
               index === bgIndex ? "opacity-100" : "opacity-0"
             }`}
             src={src}
-            poster={index === 0 ? playlist.posterImage : undefined}
             muted
             loop
             playsInline
@@ -467,7 +600,7 @@ export function BuswalePlayer() {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setPlaylistId(item.id)}
+                onClick={() => selectPlaylist(item.id)}
                 aria-pressed={active}
                 className={`shrink-0 rounded-full px-2 py-1 text-[0.65rem] font-medium tracking-wide transition sm:px-3.5 sm:py-1.5 sm:text-sm ${
                   active

@@ -16,17 +16,17 @@ export const playlists: Playlist[] = [
     name: "Buswale Ki Playlist",
     shortLabel: "Bus वाले",
     titleLines: ["Bus वाले", "Ki प्लेलिस्ट"],
-    tagline: "Mountain roads, chai stops, and songs that carry the bus.",
+    tagline: "Roads, chai stops, and songs for the bus.",
     youtubePlaylistId: "PLKbDb5lIKyZ8", // https://music.youtube.com/playlist?list=PLKbDb5lIKyZ8
     backgroundVideos: ["/images/bus/1vid.mp4?v=2", "/images/bus/2vid.mp4"],
-    posterImage: "/images/bus/b1.png",
+    posterImage: "/images/other/bus.png",
   },
   {
     id: "ghazal",
     name: "2 AM Ghazal",
     shortLabel: "2 AM ग़ज़ल",
     titleLines: ["2 AM", "ग़ज़ल"],
-    tagline: "Late-night ghazals for quiet hours.",
+    tagline: "Late ghazals for quiet night hours.",
     youtubePlaylistId: "PLaiT07hQ03HA", // https://music.youtube.com/playlist?list=PLaiT07hQ03HA
     backgroundVideos: [
       "/images/ghazals/1.mp4",
@@ -34,17 +34,18 @@ export const playlists: Playlist[] = [
       "/images/ghazals/3.mp4",
       "/images/ghazals/4.mp4",
     ],
+    posterImage: "/images/other/ghazal.png",
   },
   {
     id: "desi-hiphop",
     name: "Desi Hip Hop",
     shortLabel: "देसी हिप हॉप",
     titleLines: ["देसी", "हिप हॉप"],
-    tagline: "Desi Hip Hop",
+    tagline: "Bars, beats, and late-night energy.",
     youtubePlaylistId: "PLauPiAiig_ng", // https://music.youtube.com/playlist?list=PLauPiAiig_ng
     backgroundVideos: [],
     backgroundImages: ["/images/ihip/1.png"],
-    posterImage: "/images/ihip/1.png",
+    posterImage: "/images/other/hiphop.png",
   },
 ];
 

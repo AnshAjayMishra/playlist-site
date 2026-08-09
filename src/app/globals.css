@@ -92,6 +92,48 @@ body {
   -webkit-backdrop-filter: blur(18px) saturate(1.3);
 }
 
+.playlist-vinyl {
+  position: relative;
+  width: min(42vw, 170px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 10px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 12px rgba(255, 255, 255, 0.08);
+  transition:
+    transform 280ms ease,
+    box-shadow 280ms ease;
+}
+
+.playlist-vinyl:hover {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow:
+    0 26px 50px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 10px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 12px rgba(255, 255, 255, 0.12);
+}
+
+.playlist-vinyl:hover .playlist-vinyl-art {
+  animation: vinyl-spin 4s linear infinite;
+}
+
+.playlist-vinyl-grooves {
+  background:
+    repeating-radial-gradient(
+      circle at center,
+      rgba(0, 0, 0, 0.35) 0 1px,
+      rgba(255, 255, 255, 0.04) 1px 3px
+    );
+}
+
+@media (max-width: 640px) {
+  .playlist-vinyl {
+    width: min(56vw, 180px);
+  }
+}
+
 .capsule-seek {
   -webkit-appearance: none;
   appearance: none;
