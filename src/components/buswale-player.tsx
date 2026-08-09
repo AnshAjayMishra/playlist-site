@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Playlist } from "@/data/playlists";
-
-type BuswalePlayerProps = {
-  playlist: Playlist;
-};
+import { playlists } from "@/data/playlists";
 
 type YTPlayer = {
   playVideo: () => void;
@@ -114,22 +110,28 @@ function formatTime(seconds: number) {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
+export function BuswalePlayer() {
+  const [playlistId, setPlaylistId] = useState(playlists[0]?.id ?? "buswale");
+  const playlist =
+    playlists.find((item) => item.id === playlistId) ?? playlists[0];
+
   const [entered, setEntered] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [shuffle, setShuffle] = useState(false);
-  const [title, setTitle] = useState("Bus वाले Ki प्लेलिस्ट");
+  const [title, setTitle] = useState(playlist?.name ?? "Playlist");
   const [artist, setArtist] = useState("YouTube Music");
   const [videoId, setVideoId] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [seeking, setSeeking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bgIndex, setBgIndex] = useState(0);
 
   const playerRef = useRef<YTPlayer | null>(null);
   const playerMountRef = useRef<HTMLDivElement | null>(null);
-  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
+  const bgVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const lastTrackIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const enterTimer = window.setTimeout(() => setEntered(true), 40);
@@ -137,26 +139,72 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
   }, []);
 
   useEffect(() => {
-    const video = bgVideoRef.current;
-    if (!video) return;
+    if (!playlist) return;
 
-    video.muted = true;
-    video.defaultMuted = true;
-    video.playsInline = true;
+    setBgIndex(0);
+    setPlaying(false);
+    setShuffle(false);
+    setPlayerReady(false);
+    setVideoId(null);
+    setCurrentTime(0);
+    setDuration(0);
+    setTitle(playlist.name);
+    setArtist("YouTube Music");
+    setError(
+      playlist.youtubePlaylistId
+        ? null
+        : "Add a YouTube Music playlist link for 2 AM ग़ज़ल.",
+    );
+    lastTrackIdRef.current = null;
+    bgVideoRefs.current = [];
+  }, [playlist]);
 
-    const tryPlay = () => {
-      void video.play().catch(() => {
-        // Autoplay can still fail in some browsers; leave muted video ready.
-      });
-    };
+  // One looping bg video per track — switch only when the song changes.
+  useEffect(() => {
+    if (!videoId || !playlist) return;
 
-    tryPlay();
-    video.addEventListener("canplay", tryPlay);
-    return () => video.removeEventListener("canplay", tryPlay);
-  }, [playlist.backgroundVideo]);
+    if (lastTrackIdRef.current == null) {
+      lastTrackIdRef.current = videoId;
+      return;
+    }
+
+    if (lastTrackIdRef.current !== videoId) {
+      lastTrackIdRef.current = videoId;
+      setBgIndex((current) => (current + 1) % playlist.backgroundVideos.length);
+    }
+  }, [videoId, playlist]);
+
+  useEffect(() => {
+    if (!playlist) return;
+    const videos = bgVideoRefs.current;
+
+    videos.forEach((video, index) => {
+      if (!video) return;
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.loop = true;
+
+      if (index === bgIndex) {
+        if (video.paused) {
+          void video.play().catch(() => {});
+        }
+      } else {
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+  }, [bgIndex, playlist]);
 
   useEffect(() => {
     let destroyed = false;
+
+    if (!playlist?.youtubePlaylistId) {
+      playerRef.current?.destroy();
+      playerRef.current = null;
+      playerMountRef.current?.replaceChildren();
+      return;
+    }
 
     function syncTrack(player: YTPlayer) {
       try {
@@ -173,12 +221,13 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
 
     loadYouTubeApi()
       .then(() => {
-        if (destroyed || !window.YT || !playerMountRef.current) return;
+        if (destroyed || !window.YT || !playerMountRef.current || !playlist) {
+          return;
+        }
 
-        // Fresh host node each mount — YT.Player replaces the div with an iframe.
         playerMountRef.current.replaceChildren();
         const host = document.createElement("div");
-        host.id = "buswale-yt-audio";
+        host.id = "site-yt-audio";
         playerMountRef.current.appendChild(host);
 
         playerRef.current?.destroy();
@@ -239,7 +288,6 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
               if (destroyed) return;
               setError(youtubeErrorMessage(event.data));
               setPlaying(false);
-              // Skip blocked/unavailable tracks automatically.
               if (event.data === 100 || event.data === 101 || event.data === 150) {
                 window.setTimeout(() => event.target.nextVideo(), 400);
               }
@@ -259,7 +307,7 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
       playerRef.current = null;
       playerMountRef.current?.replaceChildren();
     };
-  }, [playlist.youtubePlaylistId]);
+  }, [playlist]);
 
   useEffect(() => {
     if (!playerReady || !playing || seeking) return;
@@ -278,6 +326,10 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
 
     return () => window.clearInterval(timer);
   }, [playerReady, playing, seeking]);
+
+  if (!playlist) {
+    return null;
+  }
 
   function togglePlay() {
     const player = playerRef.current;
@@ -321,36 +373,65 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
   const artwork =
     videoId != null
-      ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+      ? `https://i.ytimg.com/vi/${videoId}/hq720.jpg`
       : playlist.posterImage;
 
   return (
-    <main className="relative min-h-dvh overflow-hidden text-[var(--ink)]">
-      <div className="absolute inset-0" aria-hidden>
-        <video
-          ref={bgVideoRef}
-          className="h-full w-full object-cover"
-          src={playlist.backgroundVideo}
-          poster={playlist.posterImage}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,18,14,0.62)_0%,rgba(12,18,14,0.12)_42%,rgba(12,18,14,0.72)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,214,153,0.18),transparent_50%)]" />
+    <main className="relative min-h-dvh text-[var(--ink)]">
+      <div className="absolute inset-0 overflow-hidden" aria-hidden>
+        {playlist.backgroundVideos.map((src, index) => (
+          <video
+            key={`${playlist.id}-${src}`}
+            ref={(node) => {
+              bgVideoRefs.current[index] = node;
+            }}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ease-in-out ${
+              index === bgIndex ? "opacity-100" : "opacity-0"
+            }`}
+            src={src}
+            poster={index === 0 ? playlist.posterImage : undefined}
+            muted
+            loop
+            playsInline
+            preload="auto"
+            autoPlay={index === 0}
+          />
+        ))}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,18,14,0.5)_0%,rgba(12,18,14,0.08)_42%,rgba(12,18,14,0.58)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,214,153,0.14),transparent_50%)]" />
       </div>
 
-      {/* Keep iframe in-viewport — fully off-screen/opacity-0 players often refuse to play */}
       <div
         ref={playerMountRef}
         className="pointer-events-none fixed bottom-0 left-0 z-[-1] h-[135px] w-[240px] opacity-[0.01]"
         aria-hidden
       />
 
+      <div className="absolute right-3 top-3 z-20 sm:right-5 sm:top-5">
+        <div className="playlist-switcher flex items-center gap-1 p-1">
+          {playlists.map((item) => {
+            const active = item.id === playlist.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setPlaylistId(item.id)}
+                aria-pressed={active}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium tracking-wide transition sm:px-3.5 sm:text-sm ${
+                  active
+                    ? "bg-white text-[var(--soil)]"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {item.shortLabel}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div
-        className={`relative z-10 mx-auto flex min-h-dvh w-full max-w-4xl flex-col items-center px-4 pb-8 pt-10 sm:px-6 sm:pt-14 ${
+        className={`relative z-10 mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center px-4 pb-7 pt-10 sm:px-6 sm:pt-14 ${
           entered ? "animate-rise" : "opacity-0 translate-y-4"
         }`}
       >
@@ -359,32 +440,52 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
             className="font-playlist-title mt-12 block text-[clamp(2.4rem,8vw,4.75rem)] leading-[1.2] tracking-normal text-white sm:mt-14"
             style={{ fontFamily: "Gotu, sans-serif" }}
           >
-            Bus वाले <br /> Ki प्लेलिस्ट
+            {playlist.titleLines.map((line, index) => (
+              <span key={`${playlist.id}-${line}`}>
+                {index > 0 ? <br /> : null}
+                {line}
+              </span>
+            ))}
           </span>
         </h1>
 
-        <div className="mt-auto w-full max-w-[720px]">
+        <div className="mt-auto w-full max-w-[560px]">
           {error ? (
-            <p className="mb-3 text-center text-sm text-amber-200/90">{error}</p>
+            <p className="mb-2.5 text-center text-sm text-amber-200/90">{error}</p>
           ) : null}
-          <div className="capsule-player flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-4 sm:py-3.5">
-            <div
-              className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-full ring-1 ring-white/20 sm:h-16 sm:w-16 ${
-                playing ? "animate-vinyl-spin" : ""
-              }`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={artwork} alt="" className="h-full w-full object-cover" />
-              <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.85)_0_9%,transparent_10%)]" />
+          <div className="capsule-player flex items-center gap-3 px-3 py-2.5 sm:gap-3.5 sm:px-3.5 sm:py-3">
+            <div className="relative h-11 w-11 shrink-0 sm:h-12 sm:w-12">
+              <div
+                className={`absolute inset-0 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/25 ${
+                  playing ? "animate-vinyl-spin" : ""
+                }`}
+              >
+                {artwork ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={artwork}
+                      alt=""
+                      className="absolute left-1/2 top-1/2 h-[130%] w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center"
+                    />
+                    <span
+                      className="pointer-events-none absolute left-1/2 top-1/2 z-[1] h-[18%] w-[18%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/90 ring-1 ring-white/15"
+                      aria-hidden
+                    />
+                  </>
+                ) : null}
+              </div>
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[0.95rem] font-semibold leading-tight text-white sm:text-base">
+              <p className="truncate text-[0.9rem] font-semibold leading-tight text-white sm:text-[0.95rem]">
                 {title}
               </p>
-              <p className="mt-0.5 truncate text-xs text-white/65 sm:text-sm">{artist}</p>
+              <p className="mt-0.5 truncate text-[0.7rem] text-white/60 sm:text-xs">
+                {artist}
+              </p>
 
-              <div className="mt-2.5">
+              <div className="mt-2">
                 <input
                   type="range"
                   min={0}
@@ -406,21 +507,21 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
                   className="capsule-seek w-full"
                   style={{ ["--progress" as string]: `${progress}%` }}
                 />
-                <p className="mt-1 text-[0.7rem] tabular-nums text-white/80 sm:text-xs">
+                <p className="mt-1 text-[0.65rem] tabular-nums text-white/70 sm:text-[0.7rem]">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </p>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
               <button
                 type="button"
                 onClick={toggleShuffle}
                 disabled={!playerReady}
                 aria-pressed={shuffle}
                 aria-label={shuffle ? "Turn shuffle off" : "Turn shuffle on"}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition sm:h-9 sm:w-9 disabled:opacity-40 ${
-                  shuffle ? "text-[var(--amber-bright)]" : "text-white/85 hover:text-white"
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition disabled:opacity-40 ${
+                  shuffle ? "text-[var(--amber-bright)]" : "text-white/75 hover:text-white"
                 }`}
               >
                 <ShuffleIcon />
@@ -431,7 +532,7 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
                 onClick={playPrevious}
                 disabled={!playerReady}
                 aria-label="Previous"
-                className="inline-flex h-9 w-9 items-center justify-center text-white transition hover:text-white/80 disabled:opacity-40"
+                className="inline-flex h-8 w-8 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40"
               >
                 <PrevIcon />
               </button>
@@ -441,7 +542,7 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
                 onClick={togglePlay}
                 disabled={!playerReady}
                 aria-label={playing ? "Pause" : "Play"}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition hover:scale-[1.03] disabled:opacity-40 sm:h-12 sm:w-12"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-black transition hover:bg-white disabled:opacity-40"
               >
                 {playing ? <PauseIcon /> : <PlayIcon />}
               </button>
@@ -451,7 +552,7 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
                 onClick={playNext}
                 disabled={!playerReady}
                 aria-label="Next"
-                className="inline-flex h-9 w-9 items-center justify-center text-white transition hover:text-white/80 disabled:opacity-40"
+                className="inline-flex h-8 w-8 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40"
               >
                 <NextIcon />
               </button>
@@ -465,7 +566,7 @@ export function BuswalePlayer({ playlist }: BuswalePlayerProps) {
 
 function PlayIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
       <path d="M4 2.6v10.8L13.4 8 4 2.6Z" />
     </svg>
   );
@@ -473,7 +574,7 @@ function PlayIcon() {
 
 function PauseIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
       <rect x="3.4" y="2.6" width="3.2" height="10.8" rx="0.7" />
       <rect x="9.4" y="2.6" width="3.2" height="10.8" rx="0.7" />
     </svg>
@@ -482,7 +583,7 @@ function PauseIcon() {
 
 function PrevIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <path d="M6 6h2.2v12H6V6Zm3.2 6 10.3 6.4V5.6L9.2 12Z" />
     </svg>
   );
@@ -490,7 +591,7 @@ function PrevIcon() {
 
 function NextIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <path d="M15.8 6H18v12h-2.2V6ZM4.5 18.4 14.8 12 4.5 5.6v12.8Z" />
     </svg>
   );
@@ -498,7 +599,7 @@ function NextIcon() {
 
 function ShuffleIcon() {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M16 3h5v5M21 3l-7.5 7.5M4 20l6.5-6.5M21 16v5h-5M21 21l-6-6M4 4l4 4"
         stroke="currentColor"
