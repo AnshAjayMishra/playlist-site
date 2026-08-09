@@ -153,7 +153,7 @@ export function BuswalePlayer() {
     setError(
       playlist.youtubePlaylistId
         ? null
-        : "Add a YouTube Music playlist link for 2 AM ग़ज़ल.",
+        : "Add a YouTube Music playlist link for this collection.",
     );
     lastTrackIdRef.current = null;
     bgVideoRefs.current = [];
@@ -170,7 +170,11 @@ export function BuswalePlayer() {
 
     if (lastTrackIdRef.current !== videoId) {
       lastTrackIdRef.current = videoId;
-      setBgIndex((current) => (current + 1) % playlist.backgroundVideos.length);
+      const bgCount =
+        playlist.backgroundVideos.length ||
+        playlist.backgroundImages?.length ||
+        1;
+      setBgIndex((current) => (current + 1) % bgCount);
     }
   }, [videoId, playlist]);
 
@@ -395,6 +399,19 @@ export function BuswalePlayer() {
             playsInline
             preload="auto"
             autoPlay={index === 0}
+          />
+        ))}
+        {(playlist.backgroundImages ?? []).map((src, index) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={`${playlist.id}-img-${src}`}
+            src={src}
+            alt=""
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ease-in-out ${
+              playlist.backgroundVideos.length === 0 && index === bgIndex
+                ? "opacity-100"
+                : "opacity-0"
+            }`}
           />
         ))}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,18,14,0.5)_0%,rgba(12,18,14,0.08)_42%,rgba(12,18,14,0.58)_100%)]" />

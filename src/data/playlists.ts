@@ -6,6 +6,7 @@ export type Playlist = {
   tagline: string;
   youtubePlaylistId: string;
   backgroundVideos: string[];
+  backgroundImages?: string[];
   posterImage?: string;
 };
 
@@ -35,13 +36,15 @@ export const playlists: Playlist[] = [
     ],
   },
   {
-    id: "Indi Hip Hop",  
-    name: "Indi Hip Hop",
-    shortLabel: "Indi Hip Hop",
-    titleLines: ["Indi", "Hip Hop"],
-    tagline: "Indi Hip Hop songs",
-    youtubePlaylistId: "", // https://music.youtube.com/playlist?list=PLKbDb5lIKyZ8
-    backgroundVideos: ["", ""],
+    id: "desi-hiphop",
+    name: "Desi Hip Hop",
+    shortLabel: "देसी हिप हॉप",
+    titleLines: ["देसी", "हिप हॉप"],
+    tagline: "Desi Hip Hop",
+    youtubePlaylistId: "PLauPiAiig_ng", // https://music.youtube.com/playlist?list=PLauPiAiig_ng
+    backgroundVideos: [],
+    backgroundImages: ["/images/ihip/1.png"],
+    posterImage: "/images/ihip/1.png",
   },
 ];
 
