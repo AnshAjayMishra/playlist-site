@@ -9,8 +9,8 @@ const bodyFont = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Bus वाले Ki प्लेलिस्ट",
-  description: "Buswale Ki Playlist",
+  title: "musxic",
+  description: "musxic — pick a playlist and play.",
 };
 
 export const viewport: Viewport = {

@@ -155,6 +155,18 @@ export function BuswalePlayer() {
   }, []);
 
   useEffect(() => {
+    if (hasChosen === null) {
+      document.title = "musxic";
+      return;
+    }
+    if (!hasChosen || !playlist) {
+      document.title = "musxic";
+      return;
+    }
+    document.title = playlist.titleLines.join(" ");
+  }, [hasChosen, playlist]);
+
+  useEffect(() => {
     if (!hasChosen) {
       setEntered(false);
       return;
