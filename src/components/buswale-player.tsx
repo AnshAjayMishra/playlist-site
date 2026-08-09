@@ -501,82 +501,80 @@ export function BuswalePlayer() {
           </span>
         </h1>
 
-        <div className="mt-auto w-full max-w-[560px]">
+        <div className="mt-auto w-full max-w-[600px]">
           {error ? (
             <p className="mb-2.5 px-1 text-center text-xs text-amber-200/90 sm:text-sm">
               {error}
             </p>
           ) : null}
-          <div className="capsule-player flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:gap-3.5 sm:px-3.5 sm:py-3">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <div className="relative h-11 w-11 shrink-0 sm:h-12 sm:w-12">
-                <div
-                  className={`absolute inset-0 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/25 ${
-                    playing ? "animate-vinyl-spin" : ""
-                  }`}
-                >
-                  {artwork ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={artwork}
-                        alt=""
-                        className="absolute left-1/2 top-1/2 h-[130%] w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center"
-                      />
-                      <span
-                        className="pointer-events-none absolute left-1/2 top-1/2 z-[1] h-[18%] w-[18%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/90 ring-1 ring-white/15"
-                        aria-hidden
-                      />
-                    </>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[0.85rem] font-semibold leading-tight text-white sm:text-[0.95rem]">
-                  {title}
-                </p>
-                <p className="mt-0.5 truncate text-[0.65rem] text-white/60 sm:text-xs">
-                  {artist}
-                </p>
-
-                <div className="mt-2">
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 0}
-                    step={0.1}
-                    value={Math.min(currentTime, duration || 0)}
-                    disabled={!playerReady || duration <= 0}
-                    onChange={(event) => onSeekInput(Number(event.target.value))}
-                    onMouseUp={(event) =>
-                      onSeekCommit(Number((event.target as HTMLInputElement).value))
-                    }
-                    onTouchEnd={(event) =>
-                      onSeekCommit(Number((event.target as HTMLInputElement).value))
-                    }
-                    onKeyUp={(event) =>
-                      onSeekCommit(Number((event.target as HTMLInputElement).value))
-                    }
-                    aria-label="Seek"
-                    className="capsule-seek w-full"
-                    style={{ ["--progress" as string]: `${progress}%` }}
-                  />
-                  <p className="mt-1 text-[0.65rem] tabular-nums text-white/70 sm:text-[0.7rem]">
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </p>
-                </div>
+          <div className="capsule-player flex items-center gap-2.5 px-2.5 py-2 sm:gap-3.5 sm:px-3.5 sm:py-3">
+            <div className="relative h-14 w-14 shrink-0 sm:h-16 sm:w-16">
+              <div
+                className={`absolute inset-0 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/25 ${
+                  playing ? "animate-vinyl-spin" : ""
+                }`}
+              >
+                {artwork ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={artwork}
+                      alt=""
+                      className="absolute left-1/2 top-1/2 h-[130%] w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center"
+                    />
+                    <span
+                      className="pointer-events-none absolute left-1/2 top-1/2 z-[1] h-[18%] w-[18%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/90 ring-1 ring-white/15"
+                      aria-hidden
+                    />
+                  </>
+                ) : null}
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center justify-center gap-2 sm:gap-1.5">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[0.8rem] font-semibold leading-tight text-white sm:text-[0.95rem]">
+                {title}
+              </p>
+              <p className="mt-0.5 truncate text-[0.65rem] text-white/60 sm:text-xs">
+                {artist}
+              </p>
+
+              <div className="mt-1.5 sm:mt-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={duration || 0}
+                  step={0.1}
+                  value={Math.min(currentTime, duration || 0)}
+                  disabled={!playerReady || duration <= 0}
+                  onChange={(event) => onSeekInput(Number(event.target.value))}
+                  onMouseUp={(event) =>
+                    onSeekCommit(Number((event.target as HTMLInputElement).value))
+                  }
+                  onTouchEnd={(event) =>
+                    onSeekCommit(Number((event.target as HTMLInputElement).value))
+                  }
+                  onKeyUp={(event) =>
+                    onSeekCommit(Number((event.target as HTMLInputElement).value))
+                  }
+                  aria-label="Seek"
+                  className="capsule-seek w-full"
+                  style={{ ["--progress" as string]: `${progress}%` }}
+                />
+                <p className="mt-1 text-[0.6rem] tabular-nums text-white/70 sm:text-[0.7rem]">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1.5">
               <button
                 type="button"
                 onClick={toggleShuffle}
                 disabled={!playerReady}
                 aria-pressed={shuffle}
                 aria-label={shuffle ? "Turn shuffle off" : "Turn shuffle on"}
-                className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition sm:h-8 sm:w-8 disabled:opacity-40 ${
+                className={`inline-flex h-7 w-7 items-center justify-center rounded-full transition sm:h-8 sm:w-8 disabled:opacity-40 ${
                   shuffle ? "text-[var(--amber-bright)]" : "text-white/75 hover:text-white"
                 }`}
               >
@@ -588,7 +586,7 @@ export function BuswalePlayer() {
                 onClick={playPrevious}
                 disabled={!playerReady}
                 aria-label="Previous"
-                className="inline-flex h-9 w-9 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40 sm:h-8 sm:w-8"
+                className="inline-flex h-7 w-7 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40 sm:h-8 sm:w-8"
               >
                 <PrevIcon />
               </button>
@@ -598,7 +596,7 @@ export function BuswalePlayer() {
                 onClick={togglePlay}
                 disabled={!playerReady}
                 aria-label={playing ? "Pause" : "Play"}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-black transition hover:bg-white disabled:opacity-40 sm:h-10 sm:w-10"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-black transition hover:bg-white disabled:opacity-40 sm:h-10 sm:w-10"
               >
                 {playing ? <PauseIcon /> : <PlayIcon />}
               </button>
@@ -608,7 +606,7 @@ export function BuswalePlayer() {
                 onClick={playNext}
                 disabled={!playerReady}
                 aria-label="Next"
-                className="inline-flex h-9 w-9 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40 sm:h-8 sm:w-8"
+                className="inline-flex h-7 w-7 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40 sm:h-8 sm:w-8"
               >
                 <NextIcon />
               </button>
