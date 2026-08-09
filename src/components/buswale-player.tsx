@@ -127,6 +127,7 @@ export function BuswalePlayer() {
   const [seeking, setSeeking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bgIndex, setBgIndex] = useState(0);
+  const [now, setNow] = useState<Date | null>(null);
 
   const playerRef = useRef<YTPlayer | null>(null);
   const playerMountRef = useRef<HTMLDivElement | null>(null);
@@ -136,6 +137,12 @@ export function BuswalePlayer() {
   useEffect(() => {
     const enterTimer = window.setTimeout(() => setEntered(true), 40);
     return () => window.clearTimeout(enterTimer);
+  }, []);
+
+  useEffect(() => {
+    setNow(new Date());
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -380,6 +387,22 @@ export function BuswalePlayer() {
       ? `https://i.ytimg.com/vi/${videoId}/hq720.jpg`
       : playlist.posterImage;
 
+  const timeLabel = now
+    ? now.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      })
+    : "";
+  const dateLabel = now
+    ? now.toLocaleDateString([], {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      })
+    : "";
+
   return (
     <main className="relative min-h-dvh text-[var(--ink)]">
       <div className="absolute inset-0 overflow-hidden" aria-hidden>
@@ -424,8 +447,20 @@ export function BuswalePlayer() {
         aria-hidden
       />
 
-      <div className="absolute right-3 top-3 z-20 sm:right-5 sm:top-5">
-        <div className="playlist-switcher flex items-center gap-1 p-1">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-3 sm:px-5 sm:pt-[max(1.25rem,env(safe-area-inset-top))]">
+        <div
+          className="playlist-switcher pointer-events-auto flex max-w-[48%] shrink items-baseline gap-1.5 overflow-hidden px-2.5 py-1.5 text-white sm:max-w-none sm:gap-2 sm:px-3.5 sm:py-2"
+          aria-live="polite"
+        >
+          <span className="truncate text-[0.7rem] font-semibold tabular-nums leading-none tracking-wide sm:text-[0.95rem]">
+            {timeLabel || "—:—"}
+          </span>
+          <span className="hidden truncate text-[0.65rem] tracking-wide text-white/70 min-[380px]:inline sm:text-xs">
+            {dateLabel || "—"}
+          </span>
+        </div>
+
+        <div className="playlist-switcher pointer-events-auto flex max-w-[52%] items-center gap-0.5 overflow-x-auto p-0.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:max-w-none sm:gap-1 sm:p-1 [&::-webkit-scrollbar]:hidden">
           {playlists.map((item) => {
             const active = item.id === playlist.id;
             return (
@@ -434,7 +469,7 @@ export function BuswalePlayer() {
                 type="button"
                 onClick={() => setPlaylistId(item.id)}
                 aria-pressed={active}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium tracking-wide transition sm:px-3.5 sm:text-sm ${
+                className={`shrink-0 rounded-full px-2 py-1 text-[0.65rem] font-medium tracking-wide transition sm:px-3.5 sm:py-1.5 sm:text-sm ${
                   active
                     ? "bg-white text-[var(--soil)]"
                     : "text-white/80 hover:bg-white/10 hover:text-white"
@@ -448,13 +483,13 @@ export function BuswalePlayer() {
       </div>
 
       <div
-        className={`relative z-10 mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center px-4 pb-7 pt-10 sm:px-6 sm:pt-14 ${
+        className={`relative z-10 mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-20 sm:px-6 sm:pb-8 sm:pt-24 ${
           entered ? "animate-rise" : "opacity-0 translate-y-4"
         }`}
       >
-        <h1 className="text-center drop-shadow-[0_8px_28px_rgba(0,0,0,0.45)]">
+        <h1 className="px-1 text-center drop-shadow-[0_8px_28px_rgba(0,0,0,0.45)]">
           <span
-            className="font-playlist-title mt-12 block text-[clamp(2.4rem,8vw,4.75rem)] leading-[1.2] tracking-normal text-white sm:mt-14"
+            className="font-playlist-title mt-2 block text-[clamp(1.85rem,8.5vw,4.75rem)] leading-[1.2] tracking-normal text-white sm:mt-8"
             style={{ fontFamily: "Gotu, sans-serif" }}
           >
             {playlist.titleLines.map((line, index) => (
@@ -468,76 +503,80 @@ export function BuswalePlayer() {
 
         <div className="mt-auto w-full max-w-[560px]">
           {error ? (
-            <p className="mb-2.5 text-center text-sm text-amber-200/90">{error}</p>
+            <p className="mb-2.5 px-1 text-center text-xs text-amber-200/90 sm:text-sm">
+              {error}
+            </p>
           ) : null}
-          <div className="capsule-player flex items-center gap-3 px-3 py-2.5 sm:gap-3.5 sm:px-3.5 sm:py-3">
-            <div className="relative h-11 w-11 shrink-0 sm:h-12 sm:w-12">
-              <div
-                className={`absolute inset-0 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/25 ${
-                  playing ? "animate-vinyl-spin" : ""
-                }`}
-              >
-                {artwork ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={artwork}
-                      alt=""
-                      className="absolute left-1/2 top-1/2 h-[130%] w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center"
-                    />
-                    <span
-                      className="pointer-events-none absolute left-1/2 top-1/2 z-[1] h-[18%] w-[18%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/90 ring-1 ring-white/15"
-                      aria-hidden
-                    />
-                  </>
-                ) : null}
+          <div className="capsule-player flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:gap-3.5 sm:px-3.5 sm:py-3">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="relative h-11 w-11 shrink-0 sm:h-12 sm:w-12">
+                <div
+                  className={`absolute inset-0 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/25 ${
+                    playing ? "animate-vinyl-spin" : ""
+                  }`}
+                >
+                  {artwork ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={artwork}
+                        alt=""
+                        className="absolute left-1/2 top-1/2 h-[130%] w-[130%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center"
+                      />
+                      <span
+                        className="pointer-events-none absolute left-1/2 top-1/2 z-[1] h-[18%] w-[18%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/90 ring-1 ring-white/15"
+                        aria-hidden
+                      />
+                    </>
+                  ) : null}
+                </div>
               </div>
-            </div>
 
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[0.9rem] font-semibold leading-tight text-white sm:text-[0.95rem]">
-                {title}
-              </p>
-              <p className="mt-0.5 truncate text-[0.7rem] text-white/60 sm:text-xs">
-                {artist}
-              </p>
-
-              <div className="mt-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 0}
-                  step={0.1}
-                  value={Math.min(currentTime, duration || 0)}
-                  disabled={!playerReady || duration <= 0}
-                  onChange={(event) => onSeekInput(Number(event.target.value))}
-                  onMouseUp={(event) =>
-                    onSeekCommit(Number((event.target as HTMLInputElement).value))
-                  }
-                  onTouchEnd={(event) =>
-                    onSeekCommit(Number((event.target as HTMLInputElement).value))
-                  }
-                  onKeyUp={(event) =>
-                    onSeekCommit(Number((event.target as HTMLInputElement).value))
-                  }
-                  aria-label="Seek"
-                  className="capsule-seek w-full"
-                  style={{ ["--progress" as string]: `${progress}%` }}
-                />
-                <p className="mt-1 text-[0.65rem] tabular-nums text-white/70 sm:text-[0.7rem]">
-                  {formatTime(currentTime)} / {formatTime(duration)}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[0.85rem] font-semibold leading-tight text-white sm:text-[0.95rem]">
+                  {title}
                 </p>
+                <p className="mt-0.5 truncate text-[0.65rem] text-white/60 sm:text-xs">
+                  {artist}
+                </p>
+
+                <div className="mt-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration || 0}
+                    step={0.1}
+                    value={Math.min(currentTime, duration || 0)}
+                    disabled={!playerReady || duration <= 0}
+                    onChange={(event) => onSeekInput(Number(event.target.value))}
+                    onMouseUp={(event) =>
+                      onSeekCommit(Number((event.target as HTMLInputElement).value))
+                    }
+                    onTouchEnd={(event) =>
+                      onSeekCommit(Number((event.target as HTMLInputElement).value))
+                    }
+                    onKeyUp={(event) =>
+                      onSeekCommit(Number((event.target as HTMLInputElement).value))
+                    }
+                    aria-label="Seek"
+                    className="capsule-seek w-full"
+                    style={{ ["--progress" as string]: `${progress}%` }}
+                  />
+                  <p className="mt-1 text-[0.65rem] tabular-nums text-white/70 sm:text-[0.7rem]">
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+            <div className="flex shrink-0 items-center justify-center gap-2 sm:gap-1.5">
               <button
                 type="button"
                 onClick={toggleShuffle}
                 disabled={!playerReady}
                 aria-pressed={shuffle}
                 aria-label={shuffle ? "Turn shuffle off" : "Turn shuffle on"}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition disabled:opacity-40 ${
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition sm:h-8 sm:w-8 disabled:opacity-40 ${
                   shuffle ? "text-[var(--amber-bright)]" : "text-white/75 hover:text-white"
                 }`}
               >
@@ -549,7 +588,7 @@ export function BuswalePlayer() {
                 onClick={playPrevious}
                 disabled={!playerReady}
                 aria-label="Previous"
-                className="inline-flex h-8 w-8 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40"
+                className="inline-flex h-9 w-9 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40 sm:h-8 sm:w-8"
               >
                 <PrevIcon />
               </button>
@@ -559,7 +598,7 @@ export function BuswalePlayer() {
                 onClick={togglePlay}
                 disabled={!playerReady}
                 aria-label={playing ? "Pause" : "Play"}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-black transition hover:bg-white disabled:opacity-40"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-black transition hover:bg-white disabled:opacity-40 sm:h-10 sm:w-10"
               >
                 {playing ? <PauseIcon /> : <PlayIcon />}
               </button>
@@ -569,7 +608,7 @@ export function BuswalePlayer() {
                 onClick={playNext}
                 disabled={!playerReady}
                 aria-label="Next"
-                className="inline-flex h-8 w-8 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40"
+                className="inline-flex h-9 w-9 items-center justify-center text-white/85 transition hover:text-white disabled:opacity-40 sm:h-8 sm:w-8"
               >
                 <NextIcon />
               </button>

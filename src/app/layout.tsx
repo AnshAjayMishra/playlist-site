@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 
@@ -11,6 +11,12 @@ const bodyFont = Outfit({
 export const metadata: Metadata = {
   title: "Bus वाले Ki प्लेलिस्ट",
   description: "Buswale Ki Playlist",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
