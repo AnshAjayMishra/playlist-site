@@ -1,0 +1,11 @@
+const res = await fetch("http://localhost:3000/");
+const html = await res.text();
+const hasNoto = html.includes("Noto") || html.includes("noto");
+const hasPoppins = html.includes("Poppins") || html.includes("poppins");
+const hasClass = html.includes("className") || /class="[^"]*__Noto/.test(html);
+const title = html.match(/Bus[\s\S]{0,300}प्लेलिस्ट/);
+console.log({ hasNoto, hasPoppins, hasClass });
+console.log("title:", title?.[0]?.replace(/\s+/g, " ").slice(0, 250));
+const styles = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+const fontFaces = styles.join("\n").match(/@font-face[\s\S]{0,200}/g);
+console.log("font-faces:", fontFaces?.slice(0, 3));
