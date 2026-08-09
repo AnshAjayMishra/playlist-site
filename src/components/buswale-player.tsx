@@ -474,7 +474,7 @@ export function BuswalePlayer() {
         </div>
 
         <p className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 text-center text-xs text-white/55 sm:text-sm">
-          Developed और designed by{" "}
+          Developed &amp; designed by{" "}
           <a
             href="https://anshajaymishra.tech"
             target="_blank"
@@ -628,7 +628,7 @@ export function BuswalePlayer() {
       </div>
 
       <div
-        className={`relative z-10 mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-20 sm:px-6 sm:pb-8 sm:pt-24 ${
+        className={`relative z-10 mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center px-3 pb-[max(2.25rem,calc(env(safe-area-inset-bottom)+1.75rem))] pt-20 sm:px-6 sm:pb-10 sm:pt-24 ${
           entered ? "animate-rise" : "opacity-0 translate-y-4"
         }`}
       >
@@ -759,6 +759,18 @@ export function BuswalePlayer() {
           </div>
         </div>
       </div>
+
+      <p className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 text-center text-[0.65rem] leading-tight text-white/45 sm:text-[0.7rem]">
+        Developed &amp; designed by{" "}
+        <a
+          href="https://anshajaymishra.tech"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-white/70 underline decoration-white/25 underline-offset-2 transition hover:text-white hover:decoration-white/60"
+        >
+          अंश अजय मिश्रा
+        </a>
+      </p>
     </main>
   );
 }
