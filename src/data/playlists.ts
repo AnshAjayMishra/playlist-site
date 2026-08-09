@@ -1,17 +1,10 @@
-export type Track = {
-  id: string;
-  title: string;
-  artist: string;
-  src: string;
-};
-
 export type Playlist = {
   id: string;
   name: string;
   tagline: string;
-  images: string[];
-  imageIntervalMs: number;
-  tracks: Track[];
+  youtubePlaylistId: string;
+  backgroundVideo: string;
+  posterImage: string;
 };
 
 export const playlists: Playlist[] = [
@@ -19,13 +12,9 @@ export const playlists: Playlist[] = [
     id: "buswale",
     name: "Buswale Ki Playlist",
     tagline: "Mountain roads, chai stops, and songs that carry the bus.",
-    images: [
-      "/images/bus/b1.png?v=3",
-      "/images/bus/b2.png?v=3",
-      "/images/bus/b3.png?v=3",
-    ],
-    imageIntervalMs: 20_000,
-    tracks: [],
+    youtubePlaylistId: "PLKbDb5lIKyZ8", // https://music.youtube.com/playlist?list=PLKbDb5lIKyZ8
+    backgroundVideo: "/images/bus/1vid.mp4?v=2",
+    posterImage: "/images/bus/b1.png",
   },
 ];
 
