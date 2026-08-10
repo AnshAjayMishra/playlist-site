@@ -18,7 +18,8 @@ export const playlists: Playlist[] = [
     titleLines: ["Bus वाले", "Ki प्लेलिस्ट"],
     tagline: "Roads, chai stops, and songs for the bus.",
     youtubePlaylistId: "PLKbDb5lIKyZ8", // https://music.youtube.com/playlist?list=PLKbDb5lIKyZ8
-    backgroundVideos: ["/images/bus/1vid.mp4?v=2", "/images/bus/2vid.mp4"],
+    backgroundVideos: [],
+    backgroundImages: ["/images/bus/b1.png", "/images/bus/b2.png"],
     posterImage: "/images/other/bus.png",
   },
   {
@@ -44,8 +45,19 @@ export const playlists: Playlist[] = [
     tagline: "Bars, beats, and late-night energy.",
     youtubePlaylistId: "PLauPiAiig_ng", // https://music.youtube.com/playlist?list=PLauPiAiig_ng
     backgroundVideos: [],
-    backgroundImages: ["/images/ihip/1.png"],
+    backgroundImages: ["/images/ihip/1.png", "/images/ihip/2.png"],
     posterImage: "/images/other/hiphop.png",
+  },
+  {
+    id: "mood",
+    name: "Hindi Mood",
+    shortLabel: "Hindi मूड",
+    titleLines: ["Hindi", "मूड"],
+    tagline: "Songs that match how you feel.",
+    youtubePlaylistId: "PLMQ0Ii3oydYY", // https://music.youtube.com/playlist?list=PLMQ0Ii3oydYY
+    backgroundVideos: ["/images/hindi/1.mp4"],
+    backgroundImages: ["/images/hindi/1.png"],
+    posterImage: "/images/hindi/1.png",
   },
 ];
 

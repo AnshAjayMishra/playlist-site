@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { OnlineCount } from "@/components/online-count";
 import { playlists } from "@/data/playlists";
 
 type YTPlayer = {
@@ -220,9 +221,8 @@ export function BuswalePlayer() {
     if (lastTrackIdRef.current !== videoId) {
       lastTrackIdRef.current = videoId;
       const bgCount =
-        playlist.backgroundVideos.length ||
-        playlist.backgroundImages?.length ||
-        1;
+        playlist.backgroundVideos.length +
+          (playlist.backgroundImages?.length ?? 0) || 1;
       setBgIndex((current) => (current + 1) % bgCount);
     }
   }, [hasChosen, videoId, playlist]);
@@ -410,6 +410,9 @@ export function BuswalePlayer() {
           <p className="mx-auto mt-3 max-w-md text-center text-sm text-white/70">
             Record चुनो — drop the needle. Switch anytime from the top right.
           </p>
+          <div className="mt-4 flex justify-center text-xs sm:text-sm">
+            <OnlineCount />
+          </div>
 
           <div className="mt-10 flex snap-x snap-mandatory items-start gap-5 overflow-x-auto px-2 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center sm:gap-8 sm:overflow-visible [&::-webkit-scrollbar]:hidden">
             {playlists.map((item) => {
@@ -576,7 +579,7 @@ export function BuswalePlayer() {
             src={src}
             alt=""
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ease-in-out ${
-              playlist.backgroundVideos.length === 0 && index === bgIndex
+              playlist.backgroundVideos.length + index === bgIndex
                 ? "opacity-100"
                 : "opacity-0"
             }`}
@@ -645,6 +648,9 @@ export function BuswalePlayer() {
             ))}
           </span>
         </h1>
+        <div className="mt-3 flex justify-center text-xs sm:mt-4 sm:text-sm">
+          <OnlineCount />
+        </div>
 
         <div className="mt-auto w-full max-w-[600px]">
           {error ? (

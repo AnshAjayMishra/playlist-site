@@ -70,6 +70,25 @@ body {
   animation: vinyl-spin 8s linear infinite;
 }
 
+@keyframes live-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  70% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.animate-live-dot {
+  animation: live-pulse 1.6s ease-out infinite;
+}
+
 .capsule-player {
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.32);
